@@ -231,6 +231,21 @@ class EnsimeClient(object):
             self.handle_string_response(payload)
         elif typehint == "CompletionInfoList":
             self.handle_completion_info_list(payload["completions"])
+        elif typehint == "BreakpointList":
+            for bp in payload['active']:
+                self.set_breakpoint_sign(bp['file'], bp['line'])
+        # elif typehint == "SendBackgroundMessageEvent":
+            # detail = payload['detail']
+            # if detail.startswith("Resolved breakpoint at:"):
+                # (_, filename, line) = detail.split(":")
+                # filename = filename.strip()
+                # line = int(line.strip())
+
+    # bp_sign_id = 100500
+    # def set_breakpoint_sign(self, filename, line, enabled=True):
+        # self.vim.command("sign %s %d line=%d name=ensimeBreak file=%s" % ("place" if enabled else "unplace" self.bp_sign_id, line, filename))
+        # self.bp_sign_id += 1
+
     def send_request(self, request):
         self.log("send_request: in")
         self.send(json.dumps({"callId" : self.callId,"req" : request}))
@@ -306,6 +321,30 @@ class EnsimeClient(object):
                     result.append(m)
             self.suggests = None
             return result
+
+    def debug_attach(self, hostname, port):
+        return self.send_request({"typehint": "DebugAttachReq", "hostname": str(hostname), "port": str(port)})
+
+    def debug_set_breakpoint(self, filename=None, line=None, enabled=True):
+        return self.send_request({"typehint": "DebugSetBreakReq" if enabled else "DebugClearBreakReq", "file": filename or self.path(), "line": int(line or self.vim.eval("getline('.')"))})
+    def debug_list_breakpoint(self):
+        return self.send_request({"typehint": "DebugListBreakpointsReq"})
+    def debug_clear_breakpoints(self):
+        return self.send_request({"typehint": "DebugClearAllBreaksReq"})
+    def debug_run(self):
+        return self.send_request({"typehint": "DebugRunReq"})
+    def debug_stop(self):
+        return self.send_request({"typehint": "DebugStopReq"})
+
+    def debug_cont(self, threadid):
+        return self.send_request({"typehint": "DebugContinueReq", "threadId": int(threadid)})
+    def debug_step(self, threadid, out=False):
+        return self.send_request({"typehint": "DebugStepOutReq" if out else "DebugStepReq", "threadId": int(threadid)})
+    def debug_next(self, threadid,):
+        return self.send_request({"typehint": "DebugStepNext", "threadId": int(threadid)})
+    def debug_backtrace(self, threadid, index, count):
+        return self.send_request({"typehint": "DebugBacktraceReq", "index": int(index), "count": int(count)})
+
 
 class Ensime:
     def __init__(self, vim):
@@ -420,4 +459,5 @@ class Ensime:
             return self.with_current_client(lambda c: c.complete_func(findstart, base))
         else:
             return []
+
 ensime_plugin = Ensime(vim)
