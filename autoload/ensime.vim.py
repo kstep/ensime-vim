@@ -285,7 +285,7 @@ class EnsimeClient(object):
         if args[0] == '1':
             self.complete()
             line = self.vim.eval("getline('.')")
-            start = self.cursor()[1] - 1
+            start = self.cursor()[1]
             pattern = re.compile('\a')
             while start > 0 and pattern.match(line[start - 1]):
                 start -= 1
@@ -407,6 +407,9 @@ class Ensime:
 
     def au_cursor_moved(self, filename):
         self.with_current_client(lambda c: c.cursor_moved(filename))
+
+    def is_scala_file(self):
+        return self.vim.eval('&filetype') == 'scala'
 
     def fun_en_complete_func(self, args):
         if self.is_scala_file():
