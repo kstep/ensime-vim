@@ -251,15 +251,15 @@ class EnsimeClient(object):
             if not bufnr: continue
             col = note['col']
             line = note['line']
-            l = note['end'] - note['beg']
-            end = col + l
+            # l = note['end'] - note['beg']
+            # end = col + l
             result.append({
                 'text': note['msg'].encode('utf-8'),
                 'lnum': line,
                 'col': col,
                 'type': note['severity']['typehint'][4].encode('utf-8'),
                 'filename': filename,
-                'end': end,
+                'end': 0,
                 'bufnr': bufnr,
                 'valid': 1,
                 })
