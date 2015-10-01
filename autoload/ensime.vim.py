@@ -275,7 +275,7 @@ class EnsimeClient(object):
                 self.log("handle_string_response: browsing doc path {}".format(url))
                 browser = os.environ.get("BROWSER")
                 if browser != None:
-                    subprocess.Popen([browser, url])
+                    subprocess.Popen([browser, url], stdout=NULL)
                 else:
                     self.log("handle_string_response: no browser variable defined")
                 self.browse = False
