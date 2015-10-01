@@ -247,8 +247,8 @@ class EnsimeClient(object):
         result = []
         for note in notes:
             filename = note['file'].encode('utf-8')
-            bufnr = self.vim.eval('bufnr("%s")' % filename)
-            if not bufnr: continue
+            bufnr = int(self.vim.eval('bufnr("%s")' % filename))
+            if bufnr < 0: continue
             col = note['col']
             line = note['line']
             # l = note['end'] - note['beg']
