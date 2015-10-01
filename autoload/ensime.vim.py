@@ -137,11 +137,7 @@ class EnsimeClient(object):
         s = e - b
         self.send_at_point(what, self.path(), self.cursor()[0], b + 1, s, where)
     def get_position(self, row, col):
-        result = col -1
-        f = open(self.path())
-        result += sum([len(f.readline()) for i in range(row - 1)])
-        f.close()
-        return result
+        return int(self.vim.eval("line2byte(%d)" % row)) + col - 1
     def get_file_info(self):
         content = self.vim.eval('join(getline(1, "$"), "\n")')
         return {"file": self.path(), "contents": content}
@@ -294,12 +290,13 @@ class EnsimeClient(object):
         typehint = payload["typehint"]
         if typehint == "SymbolInfo":
             try:
-                self.message(payload["declPos"]["file"])
+                self.message("%s (%s)" % (payload["name"], payload["declPos"]["file"]))
                 if self.open_definition:
                     self.clean_errors()
                     self.vim.command(":vsplit {}".format(
                         payload["declPos"]["file"]))
                     self.vim.command("filetype detect")
+                    self.vim.command("goto %d" % payload["declPos"]["offset"])
             except KeyError:
                 self.message("symbol not found")
         elif typehint == "IndexerReadyEvent":
