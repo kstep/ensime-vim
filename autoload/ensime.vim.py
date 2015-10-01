@@ -284,8 +284,8 @@ class EnsimeClient(object):
         self.vim.current.line = (
             'Autocmd: Called %s times, file: %s' % (self.calls, filename))
     # @neovim.function('EnCompleteFunc', sync=True)
-    def complete_func(self, args):
-        if args[0] == '1':
+    def complete_func(self, findstart, base):
+        if findstart == '1':
             self.complete()
             line = self.vim.eval("getline('.')")
             col = self.cursor()[1]
@@ -300,7 +300,7 @@ class EnsimeClient(object):
                     break
                 self.unqueue("")
             result = []
-            pattern = re.compile('^' + args[1])
+            pattern = re.compile('^' + base)
             for m in self.suggests:
                 if pattern.match(m):
                     result.append(m)
@@ -375,6 +375,9 @@ class Ensime:
         else:
             return proc(c)
 
+    def is_scala_file(self):
+        return self.vim.eval('&filetype') == 'scala'
+
     def com_en_no_teardown(self, args, range = None):
         self.with_current_client(lambda c: c.do_no_teardown(None, None))
 
@@ -412,12 +415,9 @@ class Ensime:
     def au_cursor_moved(self, filename):
         self.with_current_client(lambda c: c.cursor_moved(filename))
 
-    def is_scala_file(self):
-        return self.vim.eval('&filetype') == 'scala'
-
-    def fun_en_complete_func(self, args):
+    def fun_en_complete_func(self, findstart, base):
         if self.is_scala_file():
-            return self.with_current_client(lambda c: c.complete_func(args))
+            return self.with_current_client(lambda c: c.complete_func(findstart, base))
         else:
             return []
 ensime_plugin = Ensime(vim)
