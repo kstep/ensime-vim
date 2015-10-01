@@ -16,8 +16,8 @@ function! SyntaxCheckers_scala_ensime_GetHighlightRegex(error)
 endfunction
 
 function! SyntaxCheckers_scala_ensime_GetLocList() dict
-    if exists('b:scala_ensime_loclist')
-        return b:scala_ensime_loclist
+    if exists('g:scala_ensime_loclist')
+        return g:scala_ensime_loclist
     else
         return []
     endif
