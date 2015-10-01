@@ -249,13 +249,17 @@ class EnsimeClient(object):
             filename = note['file'].encode('utf-8')
             bufnr = self.vim.eval('bufnr("%s")' % filename)
             if not bufnr: continue
+            col = note['col']
+            line = note['line']
+            l = note['end'] - note['beg']
+            end = col + l
             result.append({
                 'text': note['msg'].encode('utf-8'),
-                'lnum': note['line'],
-                'col': note['col'],
+                'lnum': line,
+                'col': col,
                 'type': note['severity']['typehint'][4].encode('utf-8'),
                 'filename': filename,
-                'len': note['end'] - note['beg'] - 2,
+                'end': end,
                 'bufnr': bufnr,
                 'valid': 1,
                 })

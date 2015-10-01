@@ -4,9 +4,9 @@ endif
 let g:loaded_syntastic_scala_ensime_checker = 1
 
 function! SyntaxCheckers_scala_ensime_GetHighlightRegex(error)
-    if a:error['len']
+    if a:error['end']
         let lcol = a:error['col'] - 1
-        let rcol = a:error['col'] + a:error['len']
+        let rcol = a:error['end']
         let ret = '\%>' . lcol . 'c\%<' . rcol . 'c'
     else
         let ret = ''
