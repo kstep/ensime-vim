@@ -255,7 +255,7 @@ class EnsimeClient(object):
                 'col': note['col'],
                 'type': note['severity']['typehint'][4].encode('utf-8'),
                 'filename': filename,
-                'len': note['end'] - note['beg'] + 1,
+                'len': note['end'] - note['beg'] - 2,
                 'bufnr': bufnr,
                 'valid': 1,
                 })
