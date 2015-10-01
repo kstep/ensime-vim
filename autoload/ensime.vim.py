@@ -252,14 +252,14 @@ class EnsimeClient(object):
             col = note['col']
             line = note['line']
             # l = note['end'] - note['beg']
-            # end = col + l
+            end = max(note['end'] - int(self.vim.eval('line2byte(%d)' % line)) + 2, 1)
             result.append({
                 'text': note['msg'].encode('utf-8'),
                 'lnum': line,
                 'col': col,
                 'type': note['severity']['typehint'][4].encode('utf-8'),
                 'filename': filename,
-                'end': 0,
+                'end': end,
                 'bufnr': bufnr,
                 'valid': 1,
                 })
