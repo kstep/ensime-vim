@@ -244,16 +244,27 @@ class EnsimeClient(object):
         self.log(m)
         self.vim.command("echo \"{}\"".format(m.replace('"', '\\"')))
     def handle_new_scala_notes_event(self, notes):
+        result = []
         for note in notes:
-            l = note["line"]
-            c = note["col"] - 1
-            e = note["col"] + (note["end"] - note["beg"] + 1)
-            if os.path.abspath(self.vim.eval("expand('%:p')")) == os.path.abspath(note["file"]):
-                self.errors.append(Error(note["file"], note["msg"], l, c, e))
-                match = self.vim.eval(
-                    "matchadd(g:EnErrorStyle, '\\%{}l\\%>{}c\\%<{}c')".format(l, c, e))
-                self.log("adding match {} at line {} column {} error {}".format(match, l, c, e))
-                self.matches.append(match)
+            filename = note['file'].encode('utf-8')
+            bufnr = self.vim.eval('bufnr("%s")' % filename)
+            if not bufnr: continue
+            result.append({
+                'text': note['msg'].encode('utf-8'),
+                'lnum': note['line'],
+                'col': note['col'],
+                'type': note['severity']['typehint'][4].encode('utf-8'),
+                'filename': filename,
+                'len': note['end'] - note['beg'] + 1,
+                'bufnr': bufnr,
+                'valid': 1,
+                })
+        self.vim.command('call extend(b:scala_ensime_loclist, %s)' % result)
+    def get_cache_port(self, where):
+        f = open(self.ensime_cache + "/" + where)
+        port = f.read()
+        f.close()
+        return port.replace("\n", "")
     def handle_string_response(self, payload):
         self.log("handle_string_response: in")
         if self.en_format_source_id == None:
@@ -291,8 +302,12 @@ class EnsimeClient(object):
             self.message("ensime indexer ready")
         elif typehint == "AnalyzerReadyEvent":
             self.message("ensime analyzer ready")
+        elif typehint == "ClearAllScalaNotesEvent":
+            self.vim.command('let b:scala_ensime_loclist = []')
         elif typehint == "NewScalaNotesEvent":
             self.handle_new_scala_notes_event(payload["notes"])
+        elif typehint == "FullTypeCheckCompleteEvent":
+            self.vim.command("SyntasticCheck ensime")
         elif typehint == "BasicTypeInfo":
             self.show_type(payload)
         elif typehint == "StringResponse":
