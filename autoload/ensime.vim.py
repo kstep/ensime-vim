@@ -398,9 +398,11 @@ class EnsimeClient(object):
     def complete_func(self, findstart, base):
         self.log("complete_func: in {} {}".format(findstart, base))
         if findstart == '1':
-            self.complete()
-            (_, start) = self.vim.eval(r"searchpos('\<\|\>', 'nb', getline('.'))")
-            return int(start)
+            start = int(self.vim.eval(r"searchpos('\<\|\>', 'nb', getline('.'))")[1])
+            char = self.vim.eval('getline(".")')[start - 1]
+            start -= int(char.isalnum())
+            self.complete(start)
+            return start
         else:
             start = time.time()
             while (time.time() - start) < self.complete_timeout:
