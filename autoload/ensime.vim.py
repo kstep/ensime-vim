@@ -143,7 +143,7 @@ class EnsimeClient(object):
         return {"file": self.path(), "contents": content}
     def complete(self):
         self.log("complete: in")
-        pos = self.get_position(self.cursor()[0], self.cursor()[1] + 1)
+        pos = self.get_position(self.cursor()[0], self.cursor()[1])
         self.send_request({"point": pos, "maxResults":100,
             "typehint":"CompletionsReq",
             "caseSens":True,
@@ -399,13 +399,8 @@ class EnsimeClient(object):
         self.log("complete_func: in {} {}".format(findstart, base))
         if findstart == '1':
             self.complete()
-            line = self.vim.eval("getline('.')")
-            col = self.cursor()[1]
-            start = col
-            pattern = re.compile(r'\b')
-            while start > 0 and pattern.match(line[start - 1]):
-                start -= 1
-            return min(start, col)
+            (_, start) = self.vim.eval(r"searchpos('\<\|\>', 'nb', getline('.'))")
+            return int(start)
         else:
             start = time.time()
             while (time.time() - start) < self.complete_timeout:
@@ -415,9 +410,7 @@ class EnsimeClient(object):
             result = []
             if self.suggests != None:
                 pattern = re.compile('^' + base)
-                for m in self.suggests:
-                    if pattern.match(m):
-                        result.append(m)
+                result = [m for m in self.suggests if m.startswith(base)]
                 self.suggests = None
             return result
 
