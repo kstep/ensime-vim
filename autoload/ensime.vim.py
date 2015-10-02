@@ -418,7 +418,7 @@ class EnsimeClient(object):
                 self.suggests = None
             return result
 
-    def search_symbol(self, symbol, results=10):
+    def search_symbol(self, symbol, results=200):
         self.send_request({
             "typehint": "PublicSymbolSearchReq",
             "maxResults": results,
@@ -428,12 +428,13 @@ class EnsimeClient(object):
     def handle_search_results(self, symbols):
         self.vim.command('call unite#sources#ensime#search_results_ready(%s)' % [{
             'word': symbol['name'].encode('utf-8'),
+            'abbr': "%s:%s (%s)" % (symbol['name'].encode('utf-8'), symbol['pos']['line'], symbol['declAs']['typehint'].encode('utf-8')),
             'kind': 'jump_list',
             'source': 'ensime',
             'action__path': symbol['pos']['file'].encode('utf-8'),
             'action__line': symbol['pos']['line'],
             'action__pattern': symbol['localName'].encode('utf-8').strip('$').split("$")[-1],
-            } for symbol in symbols])
+            } for symbol in symbols if 'pos' in symbol])
         self.vim.command('Unite ensime')
 
 class Ensime:
