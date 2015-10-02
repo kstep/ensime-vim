@@ -315,6 +315,8 @@ class EnsimeClient(object):
             self.handle_string_response(payload)
         elif typehint == "CompletionInfoList":
             self.handle_completion_info_list(payload["completions"])
+        elif typehint == "SymbolSearchResults":
+            self.handle_search_results(payload["syms"])
         elif typehint == "TypeInspectInfo":
             self.message(payload["type"]["fullName"])
         elif typehint == "DebugOutputEvent":
@@ -416,6 +418,24 @@ class EnsimeClient(object):
                 self.suggests = None
             return result
 
+    def search_symbol(self, symbol, results=10):
+        self.send_request({
+            "typehint": "PublicSymbolSearchReq",
+            "maxResults": results,
+            "keywords": [symbol]
+            })
+
+    def handle_search_results(self, symbols):
+        self.vim.command('call unite#sources#ensime#search_results_ready(%s)' % [{
+            'word': symbol['name'].encode('utf-8'),
+            'kind': 'jump_list',
+            'source': 'ensime',
+            'action__path': symbol['pos']['file'].encode('utf-8'),
+            'action__line': symbol['pos']['line'],
+            'action__pattern': symbol['localName'].encode('utf-8').strip('$').split("$")[-1],
+            } for symbol in symbols])
+        self.vim.command('Unite ensime')
+
 class Ensime:
     def __init__(self, vim):
         self.vim = vim
@@ -485,6 +505,9 @@ class Ensime:
 
     def is_scala_file(self):
         return self.vim.eval('&filetype') == 'scala'
+
+    def com_en_search_symbol(self, args, range=None):
+        self.with_current_client(lambda c: c.search_symbol(args[0]))
 
     def com_en_no_teardown(self, args, range = None):
         self.with_current_client(lambda c: c.do_no_teardown(None, None))

@@ -70,6 +70,10 @@ function! ensime#au_cursor_moved(filename) abort
     return s:call_plugin('au_cursor_moved', [a:filename])
 endfunction
 
+function! ensime#com_en_search_symbol(args, range) abort
+    return s:call_plugin('com_en_search_symbol', [a:args, a:range])
+endfunction
+
 function! ensime#com_en_no_teardown(args, range) abort
     return s:call_plugin('com_en_no_teardown', [a:args, a:range])
 endfunction
