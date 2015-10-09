@@ -318,7 +318,7 @@ class EnsimeClient(object):
         elif typehint == "SymbolSearchResults":
             self.handle_search_results(payload["syms"])
         elif typehint == "TypeInspectInfo":
-            self.message(payload["type"]["fullName"])
+            self.message(self.full_type_name(payload['type'], payload['interfaces'], True))
         elif typehint == "DebugOutputEvent":
             self.message(payload["body"].encode("ascii","ignore"))
         elif typehint == "DebugBreakEvent":
@@ -334,6 +334,18 @@ class EnsimeClient(object):
     def show_backtrace(self, frames):
         self.vim.command(":split backtrace.json")
         self.vim.current.buffer[:] = json.dumps(frames, indent=2).split("\n")
+
+    def full_type_name(self, type, ifaces=[], fullName=False):
+        typeArgs = ", ".join(self.full_type_name(ty) for ty in type.get("typeArgs", []))
+        if typeArgs:
+            typeArgs = "[%s]" % typeArgs
+
+        ifaces = "\n    with ".join(sorted(self.full_type_name(iface["type"], [], fullName) for iface in ifaces if iface["type"]["fullName"] not in ["scala.Any", "java.lang.Object"]))
+        if ifaces:
+            ifaces = "\n    extends %s" % ifaces
+
+        return type.get('fullName' if fullName else 'name', '???') + typeArgs + ifaces
+
     def send_request(self, request):
         self.log("send_request: in")
         self.send(json.dumps({"callId" : self.call_id,"req" : request}))
