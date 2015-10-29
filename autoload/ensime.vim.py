@@ -216,6 +216,11 @@ class EnsimeClient(object):
         self.log("inspect_type: in")
         pos = self.get_position(self.cursor()[0], self.cursor()[1])
         self.send_request({"point": pos, "typehint": "InspectTypeAtPointReq", "file": self.path(), "range": {"from": pos, "to": pos}})
+    # @neovim.command('EnImportsSuggest', range='', nargs='*', sync=True)
+    def imports_suggest(self, args, range = None):
+        self.log("imports_suggest: in")
+        pos = self.get_position(self.cursor()[0], self.cursor()[1])
+        self.send_request({"typehint": "ImportSuggestionsReq", "file": self.path(), "point": pos, "names": [self.vim.eval('expand("<cword>")')], "maxResults": 5})
     # @neovim.command('EnDocUri', range='', nargs='*', sync=True)
     def doc_uri(self, args, range = None):
         self.log("doc_uri: in")
@@ -326,6 +331,21 @@ class EnsimeClient(object):
             self.debug_thread_id = payload["threadId"]
         elif typehint == "DebugBacktrace":
             self.show_backtrace(payload["frames"])
+        elif typehint == "ImportSuggestions":
+            symbols = map(lambda s: ("import %s" % s['name'].replace("$", ".")).encode('utf-8'), payload["symLists"][0])
+            if symbols:
+                try:
+                    index = int(self.vim.eval('inputlist(%r)' % (["Choose import statement:"] + map(lambda s: "%d) %s" % (s[0] + 1, s[1]), enumerate(symbols)))))
+                    if index > 0:
+                        symbol = symbols[index - 1]
+                        line = int(self.vim.eval("search('^import ', 'bn')")) or 1
+                        self.vim.eval("append(%d, [%r])" % (line, symbol))
+
+                except IndexError:
+                    pass
+            else:
+                self.message("No import suggestions found")
+
     def show_type(self, payload):
         _type = payload["fullName"]
         if payload["typeArgs"] != []:
@@ -542,6 +562,9 @@ class Ensime:
 
     def com_en_inspect_type(self, args, range = None):
         self.with_current_client(lambda c: c.inspect_type(args, range))
+
+    def com_en_imports_suggest(self, args, range = None):
+        self.with_current_client(lambda c: c.imports_suggest(args, range))
 
     def com_en_doc_uri(self, args, range = None):
         self.with_current_client(lambda c: c.doc_uri(args, range))
