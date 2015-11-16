@@ -264,7 +264,10 @@ class EnsimeClient(object):
                 'bufnr': bufnr,
                 'valid': 1,
                 })
-        self.vim.command('call extend(g:scala_ensime_loclist, %s)' % result)
+        try:
+            self.vim.command('call extend(g:ensime_scala_loclist, %s)' % result)
+        except:
+            pass
     def get_cache_port(self, where):
         f = open(self.ensime_cache + "/" + where)
         port = f.read()
@@ -309,7 +312,7 @@ class EnsimeClient(object):
         elif typehint == "AnalyzerReadyEvent":
             self.message("ensime analyzer ready")
         elif typehint == "ClearAllScalaNotesEvent":
-            self.vim.command('let g:scala_ensime_loclist = []')
+            self.vim.command('let g:ensime_scala_loclist = []')
         elif typehint == "NewScalaNotesEvent":
             self.handle_new_scala_notes_event(payload["notes"])
         elif typehint == "FullTypeCheckCompleteEvent":
